@@ -24,7 +24,7 @@ ETH2_ADDRESSES:
 
 # yyyy-mm-dd
 START_DATE: "2022-03-01"
-END_DATE: "2022-03-31"  # Inclusive
+END_DATE: "2022-03-27"  # Inclusive
 
 # Any CoinGecko-supported currency
 CURRENCY: "USD"
@@ -50,3 +50,6 @@ CSV:
   ADD_SEP_LINE: False
   # Specify the separator/delimiter to be used between each column
   DELIMITER: ";"
+  # Use a single file for all output. If False, output will be 
+  # separated into individual files per validator
+  USE_SINGLE_FILE: True

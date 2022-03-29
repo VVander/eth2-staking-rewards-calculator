@@ -273,10 +273,9 @@ def write_rewards_to_file(datapoints: List[DataPoint]):
             writer.writerow(
                 [
                     "Date",
-                    "End-of-day balance [ETH]",
-                    "Income for date [ETH]",
-                    f"Price for date [{currency}/ETH]",
-                    f"Income for date [{currency}]",
+                    "Validator balance [ETH]",
+                    "Income [ETH]",
+                    f"Income [{currency}]",
                 ]
             )
 
@@ -294,16 +293,104 @@ def write_rewards_to_file(datapoints: List[DataPoint]):
                 total_income_curr += income_for_date_curr
 
                 writer.writerow(
-                    [
+                    [   
                         dp.datetime.strftime(format="%Y-%m-%d"),
                         dp.balance,
                         income_for_date_eth,
-                        price_for_date_curr,
                         income_for_date_curr,
                     ]
                 )
+                
                 prev_balance = dp.balance
-            #writer.writerow(["Total:", "", total_income_eth, "", total_income_curr])
+            writer.writerow(["Total:", "", total_income_eth, "", total_income_curr])
+    logger.info("All done!")
+
+
+def write_rewards_to_single_file(datapoints: List[DataPoint]):
+    """
+    Processes the datapoints, retrieves corresponding price data
+    and writes it to a single file.
+    """
+    currency = config["CURRENCY"]
+
+    eth_price = {}
+    for dp in tqdm(datapoints, desc="Fetching price data from CoinGecko"):
+        try:
+            _ = eth_price[dp.datetime.strftime(format="%d-%m-%Y")]
+            # Price already known for this date
+            continue
+        except KeyError:
+            try:
+                resp = s.get(
+                    f"https://api.coingecko.com/api/v3/coins/ethereum/history",
+                    params={"date": dp.datetime.strftime(format="%d-%m-%Y")},
+                )
+                if resp.status_code != 200:
+                    raise Exception(f"Non-200 status code received from CoinGecko - "
+                                    f"{resp.status_code} - {resp.content.decode()}")
+                cg_data = resp.json()
+            except Exception as e:
+                logger.error(
+                    "Something went wrong while fetching price data from CoinGecko"
+                )
+                raise e
+            eth_price[dp.datetime.strftime(format="%d-%m-%Y")] = cg_data["market_data"][
+                "current_price"
+            ][currency.lower()]
+
+
+    validator_iterator = tqdm(validators, desc="Writing rewards to file")
+
+    with open(f"rewards.csv", "w") as csvfile:
+        writer = csv.writer(csvfile, delimiter=config["CSV"]["DELIMITER"])
+        if config["CSV"]["ADD_SEP_LINE"]:
+            csvfile.write(f"sep={writer.dialect.delimiter}\n")
+
+        writer.writerow(
+            [
+                "Date",
+                "Validator balance [ETH]",
+                "Income [ETH]",
+                f"Income [{currency}]",
+            ]
+        )
+
+        total_income_eth = 0
+        total_income_curr = 0
+        for validator_index, eth2_address in validator_iterator:
+            validator_datapoints = [
+                dp for dp in datapoints if dp.validator_index == validator_index
+            ]
+
+            if len(validator_datapoints) == 0:
+                logger.info(
+                    f"[!] No datapoints for validator {validator_index} {eth2_address}"
+                )
+                continue
+
+            prev_balance = validator_datapoints[0].balance
+
+            for dp in validator_datapoints[1:]:
+                price_for_date_curr = eth_price[dp.datetime.strftime(format="%d-%m-%Y")]
+
+                income_for_date_eth = dp.balance - prev_balance
+                total_income_eth += income_for_date_eth
+
+                income_for_date_curr = price_for_date_curr * income_for_date_eth
+                total_income_curr += income_for_date_curr
+
+                writer.writerow(
+                    [   
+                        dp.datetime.strftime(format="%Y-%m-%d"),
+                        dp.balance,
+                        income_for_date_eth,
+                        income_for_date_curr,
+                    ]
+                )
+                
+                prev_balance = dp.balance
+
+        writer.writerow(["Total:", "", total_income_eth, "", total_income_curr])
     logger.info("All done!")
 
 
@@ -311,7 +398,10 @@ def main():
     global validators
     validators = get_validators()
     datapoints = get_all_datapoints()
-    write_rewards_to_file(datapoints=datapoints)
+    if(config["CSV"]["USE_SINGLE_FILE"]):
+        write_rewards_to_single_file(datapoints=datapoints)
+    else:
+        write_rewards_to_file(datapoints=datapoints)
 
 
 if __name__ == "__main__":
