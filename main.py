@@ -181,32 +181,31 @@ def get_all_datapoints() -> List[DataPoint]:
     now = UTC_TIMEZONE.localize(datetime.datetime.utcnow())
     start_date = datetime.datetime.fromisoformat(config["START_DATE"])
     start_date = UTC_TIMEZONE.localize(start_date)
-    start_date = max(start_date, GENESIS_DATETIME)
+    start_date = max(start_date, GENESIS_DATETIME).replace(hour=23, minute=59, second=59)
     end_date = datetime.datetime.fromisoformat(config["END_DATE"]) + datetime.timedelta(
         days=1
     )
     end_date = UTC_TIMEZONE.localize(end_date)
-    end_date = min(end_date, now)
+    
+    if end_date > now:
+        raise Exception(
+            f"End date is later than current date!"
+        )
+
+    end_date = min(end_date, now).replace(hour=23, minute=59, second=59)
+
+    # Calculate the initial balance at the start of START_DATE
+    initial_slot_no = slot_no_for_datetime(start_date)
+
+    last_slot_no = slot_no_for_datetime(end_date)
 
     # Calculate the slot numbers at which we need to retrieve the balance
     slot_numbers = []
-    # Calculate the initial balance at the start of START_DATE
-    initial_slot_no = slot_no_for_datetime(start_date)
     slot_numbers.append(initial_slot_no)
-
-    current_date = start_date
-    while current_date < end_date:
-        last_slot_datetime = current_date.replace(hour=23, minute=59, second=59)
-        last_slot_datetime = min(last_slot_datetime, now)
-
-        last_slot_no = slot_no_for_datetime(last_slot_datetime)
-        slot_numbers.append(last_slot_no)
-
-        # Move on to the next day
-        current_date = current_date + datetime.timedelta(days=1)
+    slot_numbers.append(last_slot_no)
 
     logger.debug(
-        f"Calculating rewards for slots {min(slot_numbers)} - {max(slot_numbers)}"
+        f"Calculating rewards for slots {initial_slot_no} - {last_slot_no}"
     )
 
     datapoints = []
@@ -214,7 +213,7 @@ def get_all_datapoints() -> List[DataPoint]:
         for dp in tqdm(
             p.imap(get_datapoints_for_slot, slot_numbers),
             desc=f"Retrieving beacon chain data...",
-            total=len(slot_numbers),
+            total=2,
         ):
             datapoints.extend(dp)
 
@@ -304,7 +303,7 @@ def write_rewards_to_file(datapoints: List[DataPoint]):
                     ]
                 )
                 prev_balance = dp.balance
-            writer.writerow(["Total:", "", total_income_eth, "", total_income_curr])
+            #writer.writerow(["Total:", "", total_income_eth, "", total_income_curr])
     logger.info("All done!")
 
 
