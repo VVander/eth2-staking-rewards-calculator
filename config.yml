@@ -1,35 +1,40 @@
- 
 # Enter your validator's indexes, their ETH2 addresses (public keys)
 # or the ETH1 addresses that you deposited from.
 # You don't have to enter all of these, just remove (or comment out using #)
 # the lines you don't need.
-VALIDATOR_INDEXES:
-  - 1
-  - 2
-  - 3
-  - 4
-  - 5
+#VALIDATOR_INDEXES:
+#  - 1
+#  - 2
+#  - 3
+#  - 4
+#  - 5
 
+# can be obtained via "rocketpool minipool status"
 ETH2_ADDRESSES:
-  - "0xa1d1ad0714035353258038e964ae9675dc0252ee22cea896825c01458e1807bfad2f9969338798548d9858a571f7425c"
-  - "0xb2ff4716ed345b05dd1dfc6a5a9fa70856d8c75dcc9e881dd2f766d5f891326f0d10e96f3a444ce6c912b69c22c6754d"
+  - "0x937a3b6822cfa68d9af298c0a3b8072358eb8cb58bc3a6a80044c84541ae05a3cde6ac61f91ddd34b2931b6467d96bd5"
+  - "0xb6436a5b3259cd4ae497a5d0145ceb43599c49912cf3ee796447419748b0d8e3eec1fee8d315dd3c3536c3e9b928d35c"
+  - "0xa11c60658ad1ff9d9a2698476726cff16537e67510ef5953bc8ddca920a89978fcab654eeda0947b9055e30d262081e3"
+  - "0xa561c43606e9430dc3586979fdd677b47b571a6a6f48f05cbcfb265a238f47856e995cbec4fddb7d08ce1c9d496bc385"
+  - "0xa7666ea97e282c58c10d4213d81ff2da4914309ba966016afdfc50f25b7fe310dec95a7ca0073040f367ff77c99ad86a"
+  - "0xabef954a200650badfaeeb573407be8622c34be6ab29dc92a73336eaae5296705dd56a53e5c91cd8bbbbf657d3df4c0a"
 
-ETH1_ADDRESSES:
-  - "0xbef9124b9a1593982bb126bd97c1b8996caebade"
-  - "0xdc69a0fc154b2ce0718e0eeaac041fdce455d72a"
+#ETH1_ADDRESSES:
+#  - "0xbef9124b9a1593982bb126bd97c1b8996caebade"
+#  - "0xdc69a0fc154b2ce0718e0eeaac041fdce455d72a"
 
-START_DATE: "2020-12-01"
-END_DATE: "2020-12-31"  # Inclusive
+# yyyy-mm-dd
+START_DATE: "2022-03-01"
+END_DATE: "2022-03-31"  # Inclusive
 
 # Any CoinGecko-supported currency
-CURRENCY: "EUR"
+CURRENCY: "USD"
 
 # Can be set to DEBUG, INFO, WARNING, ERROR, CRITICAL
 LOG_LEVEL: "INFO"
 
 BEACON_NODE:
   # Enter the hostname or IP address of the beacon node (e.g. localhost or 192.168.1.123)
-  HOST: localhost
+  HOST: rocketpool-node
   # Enter the HTTP/RPC port of the beacon node
   # Defaults - Lighthouse 5052, Prysm 3500, Teku 5051, Nimbus 9190
   PORT: 5052
